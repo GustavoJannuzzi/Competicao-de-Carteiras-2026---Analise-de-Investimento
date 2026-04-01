@@ -1,0 +1,35 @@
+# GOLD7008 — Análise de Investimentos
+
+[cite_start]**Professor:** Claudio Marcelo Edwards Barros [cite: 37]
+[cite_start]**Carga Horária:** 60 horas (4 créditos) [cite: 34]
+[cite_start]**Horário:** Segundas-feiras, das 19h às 22:30h [cite: 35]
+[cite_start]**Curso:** Mestrado Profissional (PPGOLD) [cite: 36]
+
+---
+
+## 1. Ementa
+* [cite_start]Métodos e técnicas de análise de projetos de investimentos[cite: 40].
+* [cite_start]Foco em custo de capital, critérios de avaliação, risco e incerteza[cite: 41, 42].
+* [cite_start]Avaliação de empresas (valuation) e ativos financeiros[cite: 43].
+* [cite_start]Métricas de risco/retorno e uso de bases de dados (Refinitiv, Bloomberg, Economática)[cite: 44].
+* [cite_start]Estudos empíricos e regressões para estimação de volatilidade[cite: 45, 46].
+
+## 2. Conteúdo Programático (Resumo dos Módulos)
+* [cite_start]**Módulo 01:** Revisão de métodos quantitativos, estatística descritiva, VaR e Fronteira Eficiente[cite: 88, 89, 95, 96].
+* [cite_start]**Módulo 02:** Estimação de Custo de Capital (Equity, Debt e WACC)[cite: 100, 101, 102, 103].
+* [cite_start]**Módulo 03:** Fluxo de Caixa Descontado e projeções contábeis[cite: 104, 106, 107].
+* [cite_start]**Módulo 04:** Variáveis de firma (ROE, ROA, EBITDA, P/L) e macroeconômicas (SELIC, PIB, Câmbio)[cite: 109, 111, 113, 116, 117, 118].
+* [cite_start]**Módulo 05:** Estudo de Eventos e Hipótese de Mercados Eficientes[cite: 119, 121, 124].
+* [cite_start]**Módulo 06:** Vetores Autorregressivos (VAR) e Causalidade de Granger[cite: 133, 134, 137].
+* [cite_start]**Módulo 07:** Regressões múltiplas para dados em painel e GMM[cite: 143, 144, 147].
+
+## 3. Avaliação de Desempenho
+1.  [cite_start]**Draft/Projeto de Artigo (60%):** * Introdução desenvolvida (20%)[cite: 152].
+    * [cite_start]Base de dados concluída (40%)[cite: 152].
+2.  [cite_start]**Atividades (40%):** Listas de exercícios e atividades em sala/casa[cite: 153].
+
+## 4. Bibliografia Principal
+* [cite_start]Damodaran, A. *Avaliação de Empresas* e *Finanças Corporativas*[cite: 62, 63].
+* [cite_start]Brigham, E. F. *Financial Management*[cite: 57].
+* [cite_start]Copeland, T. *Valuation*[cite: 60].
+* [cite_start]Wooldridge, J. M. *Introductory Econometrics*[cite: 70].

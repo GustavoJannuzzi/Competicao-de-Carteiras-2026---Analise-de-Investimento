@@ -1,0 +1,221 @@
+import json
+import os
+
+notebook_content = {
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Competição de Carteira de Investimentos 2026 - PPGOLD\n",
+    "\n",
+    "## Evolução da Estratégia: Otimização Ampla da B3\n",
+    "\n",
+    "Em vez de pré-selecionar os 4 ativos manualmente, introduzimos uma abordagem estatística robusta que avalia todo o mercado listado na B3:\n",
+    "1. **Screening Universal (Fundamentus):** Varremos o mercado buscando alta liquidez (Faturamento > R$ 5 mi/dia), rentabilidade (ROE > 15%) e bom valuation (P/L razoável).\n",
+    "2. **Magic Formula Simplificada:** Classificamos as ações com base na soma do ranking de P/L (mais barato) e ROE (mais rentável) para selecionar o Top 12 da B3.\n",
+    "3. **Análise Combinatória e Programação Não-Linear:** Avaliamos todas as combinações possíveis de 4 ativos deste grupo de elite (495 carteiras distintas). Para cada uma, calculamos os pesos ótimos via otimizador (`scipy.optimize`) para extrair o Maior Índice de Sharpe.\n",
+    "A carteira final selecionada conterá rigorosamente **4 ativos**."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import requests\n",
+    "import pandas as pd\n",
+    "import io\n",
+    "import numpy as np\n",
+    "import yfinance as yf\n",
+    "from itertools import combinations\n",
+    "from scipy.optimize import minimize\n",
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1. Web Scraping: Varrendo todas as ações da B3 (Fundamentus)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}\n",
+    "url = 'https://www.fundamentus.com.br/resultado.php'\n",
+    "resposta = requests.get(url, headers=headers)\n",
+    "df_b3 = pd.read_html(io.StringIO(resposta.text), decimal=',', thousands='.')[0]\n",
+    "\n",
+    "def limpar_porcentagem(serie):\n",
+    "    return pd.to_numeric(serie.astype(str).str.replace('.', '', regex=False).str.replace(',', '.', regex=False).str.replace('%', '', regex=False), errors='coerce') / 100.0\n",
+    "\n",
+    "df_b3['ROE'] = limpar_porcentagem(df_b3['ROE'])\n",
+    "df_b3['Liq.2meses'] = pd.to_numeric(df_b3['Liq.2meses'], errors='coerce')\n",
+    "df_b3['P/L'] = pd.to_numeric(df_b3['P/L'], errors='coerce')\n",
+    "\n",
+    "# Exibir amostra\n",
+    "df_b3.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 2. Modelagem Baseada em Fatores (Factor Investing / Screening)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Filtros agressivos: Apenas empresas altamente líquidas e saudáveis\n",
+    "filtro = df_b3[(df_b3['Liq.2meses'] > 5000000) & (df_b3['P/L'] > 0) & (df_b3['P/L'] < 30) & (df_b3['ROE'] > 0.15)].copy()\n",
+    "\n",
+    "# Ranking de Valuation (P/L mais baixo = melhor)\n",
+    "filtro['rank_pl'] = filtro['P/L'].rank(ascending=True)\n",
+    "# Ranking de Rentabilidade (ROE mais alto = melhor)\n",
+    "filtro['rank_roe'] = filtro['ROE'].rank(ascending=False)\n",
+    "\n",
+    "# Soma dos ranks (Ações baratas e rentáveis ganham)\n",
+    "filtro['rank_total'] = filtro['rank_pl'] + filtro['rank_roe']\n",
+    "\n",
+    "# Selecionar os 12 papéis da 'nata' da bolsa\n",
+    "top_12_df = filtro.sort_values('rank_total').head(12)\n",
+    "top_12_tickers = [t + '.SA' for t in top_12_df['Papel'].tolist()]\n",
+    "\n",
+    "print(\"Top 12 Ações da B3 pré-selecionadas pelo modelo:\", top_12_tickers)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3. Extração dos Dados Históricos de Cotações"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Puxando últimos 5 anos de todos os 12 ativos\n",
+    "data_inicio = '2021-03-26'\n",
+    "data_fim = '2026-03-26'\n",
+    "precos = yf.download(top_12_tickers, start=data_inicio, end=data_fim)['Close']\n",
+    "\n",
+    "# Limpar ativos com muitos NaNs (empresas novas)\n",
+    "precos = precos.dropna(axis=1)\n",
+    "tickers_validos = precos.columns.tolist()\n",
+    "\n",
+    "retornos_diarios = precos.pct_change().dropna()\n",
+    "retornos_medios_anuais = retornos_diarios.mean() * 252\n",
+    "covariancia_anual = retornos_diarios.cov() * 252"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Otimização Combinatória da Carteira (Rigorosamente 4 Ativos)\n",
+    "Avaliamos cada combinação possível de 4 ativos a partir do grupo de elite. Otimizamos matematicamente o peso na sub-carteira usando `scipy.optimize` sob um risco estrutural máximo. A meta é o Índice de Sharpe."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": None,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rf = 0.1075  # Taxa livre de risco (Proxy CDI)\n",
+    "melhor_sharpe = -100\n",
+    "melhor_carteira = None\n",
+    "pesos_otimos = None\n",
+    "estatisticas_finais = None\n",
+    "\n",
+    "# Função objetivo para o otimizador: minimizar o Sharpe Negativo\n",
+    "def negative_sharpe(weights, mean_ret, cov_matrix, risk_free_rate):\n",
+    "    p_ret = np.sum(mean_ret * weights)\n",
+    "    p_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))\n",
+    "    return -(p_ret - risk_free_rate) / p_vol\n",
+    "\n",
+    "todas_combinacoes = list(combinations(tickers_validos, 4))\n",
+    "\n",
+    "for comb in todas_combinacoes:\n",
+    "    ativos_sub = list(comb)\n",
+    "    ret_sub = retornos_medios_anuais[ativos_sub].values\n",
+    "    cov_sub = covariancia_anual.loc[ativos_sub, ativos_sub].values\n",
+    "    \n",
+    "    # Condições Iniciais (pesos iguais) e Restrições (soma=1, limites 0 a 1)\n",
+    "    num_assets = 4\n",
+    "    args = (ret_sub, cov_sub, rf)\n",
+    "    constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})\n",
+    "    bounds = tuple((0, 1) for asset in range(num_assets))\n",
+    "    \n",
+    "    resultado_opt = minimize(negative_sharpe, num_assets*[1./num_assets,], args=args,\n",
+    "                             method='SLSQP', bounds=bounds, constraints=constraints)\n",
+    "    \n",
+    "    sharpe_atual = -resultado_opt.fun\n",
+    "    if sharpe_atual > melhor_sharpe:\n",
+    "        melhor_sharpe = sharpe_atual\n",
+    "        melhor_carteira = ativos_sub\n",
+    "        pesos_otimos = resultado_opt.x\n",
+    "        ret_esperado = np.sum(ret_sub * pesos_otimos)\n",
+    "        vol_esperada = np.sqrt(np.dot(pesos_otimos.T, np.dot(cov_sub, pesos_otimos)))\n",
+    "        estatisticas_finais = (ret_esperado, vol_esperada, sharpe_atual)\n",
+    "\n",
+    "print(\"====== RESULTADO DA OTIMIZAÇÃO (MARKOWITZ + COMBINATÓRIA) ======\")\n",
+    "print(\"As 4 melhores ações selecionadas empiricamente entre TODAS da B3:\")\n",
+    "for ativo, peso in zip(melhor_carteira, pesos_otimos):\n",
+    "    print(f\"> {ativo}: {peso*100:.2f}%\")\n",
+    "\n",
+    "print(f\"\\nRetorno Esperado do Portfólio: {estatisticas_finais[0]*100:.2f}%\")\n",
+    "print(f\"Volatilidade (Risco): {estatisticas_finais[1]*100:.2f}%\")\n",
+    "print(f\"Índice de Sharpe Global: {melhor_sharpe:.4f}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Próximos Passos (Aprimoramento Futuro)\n",
+    "Neste ponto do projeto, encontramos matematicamente a melhor alocação baseada em varredura fundamentalista e quantitativa.\n",
+    "\n",
+    "**O próximo degrau será:** Incorporar uma Análise de Sentimento das Notícias em tempo real, capturando como a mídia financeira está abordando essas empresas hoje (NLP com bibliotecas como `vaderSentiment` ou via LLM de processamento) para ajustar a ponderação penalizando papéis expostos à notícias negativas recentes, refinando nosso risco subjetivo não precificado pela covariância histórica."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {"name": "ipython", "version": 3},
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+
+file_path = r"c:\Users\User\Downloads\Competicao-de-Carteiras-2026---Analise-de-Investimento\Estrategia_Carteira_Competicao.ipynb"
+with open(file_path, "w", encoding="utf-8") as f:
+    json.dump(notebook_content, f, indent=1, ensure_ascii=False)
+
+print(f"Jupyter Notebook updated at {file_path}")

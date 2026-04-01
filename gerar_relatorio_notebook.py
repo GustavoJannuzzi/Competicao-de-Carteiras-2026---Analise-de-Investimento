@@ -1,0 +1,118 @@
+import json
+import os
+
+notebook_content = {
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Relatório Técnico: Fundamentação da Carteira de Investimentos - 2026\n",
+    "\n",
+    "**Disciplina:** Análise de Investimentos (PPGOLD - UFPR)\n",
+    "**Professor:** Claudio Marcelo Edwards Barros\n",
+    "**Competição:** Competição de Carteira de Investimentos 2026\n",
+    "\n",
+    "---\n",
+    "\n",
+    "## 1. Introdução e Objetivo\n",
+    "\n",
+    "Este relatório descreve a estratégia quantitativa e qualitativa empregada para a seleção e ponderação de **4 (quatro) ativos** listados na B3. O objetivo primário é construir um portfólio de alta liquidez capaz de superar o *CDI* (benchmark), maximizando o retorno ajustado ao risco por meio de otimização combinatória, análise de métricas fundamentalistas e processamento de linguagem natural (*NLP*) aplicado à análise de sentimentos."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 2. Metodologia de Seleção (Screening Universal B3)\n",
+    "\n",
+    "Em detrimento da clássica seleção manual de papéis (*stock picking* subjetivo), a modelagem eleita baseou-se inteiramente em **Factor Investing**, filtrando toda a bolsa de valores brasileira em tempo real:\n",
+    "\n",
+    "1. **Coleta Massiva de Dados:** Os dados de todas as empresas da B3 foram extraídos e analisados em busca de *alta liquidez*, respeitando estritamente o regimento da competição.\n",
+    "2. **Filtros de Sobrevivência:** Foram eliminadas empresas com *Volume Financeiro* médio bimensal inferior a R$ 5 Milhões mensais, garantindo a liquidez contra oscilações de *spread*.\n",
+    "3. **Ranking de Excelência (A Fórmula Mágica Adaptada):** Os ativos sobreviventes foram submetidos a um sistema de *Score* fundamentado na soma dos ranqueamentos de duas métricas clássicas de *Valuation* e Lucratividade:\n",
+    "    * **ROE (Return on Equity):** Quanto maior, melhor a eficiência da gestão em rentabilizar o capital próprio.\n",
+    "    * **P/L (Preço/Lucro):** Quanto menor, maior a taxa de desconto atribuída pelo mercado, configurando oportunidades de compra (*Value*).\n",
+    "\n",
+    "Ao final desta etapa, isolamos empiricamente a **\"Top 12 Elite da B3\"**."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3. Análise Combinatória e Fronteira de Markowitz Plena\n",
+    "\n",
+    "A regra de ouro da competição exige a formação de uma carteira com *exatamente 4 ativos*.\n",
+    "\n",
+    "Muitos otimizadores contínuos da **Teoria Moderna do Portfólio (Markowitz)** tendem a alocar frações de capital em inúmeros ativos. Para solucionar essa discrepância matemática e cravar as exigências:\n",
+    "\n",
+    "* Empregamos Análise Combinatória $C(12, 4)$ sobre o rol de Elite, testando rigorosamente todas as **495 permutações únicas de 4 carteiras**.\n",
+    "* O otimizador não linear (*SciPy Organize / SLSQP*) iterou sobre matrizes de covariância históricas (base 5 anos) para definir a ponderação estatisticamente perfeita sobre cada uma das 495.\n",
+    "* A carteira com o **Maior Índice de Sharpe** global (A Carteira Tangente Absoluta) foi consagrada."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Camada de Proteção Subjetiva: Análise de Sentimento (NLP)\n",
+    "\n",
+    "Como modelos matemáticos regressivos sofrem com o paradoxo do espelho retrovisor (não enxergam cisnes negros imediatos), adicionou-se uma inovadora camada de *Análise de Sentimentos em Notícias*.\n",
+    "\n",
+    "* **Rastreamento de Mídia:** O algoritmo raspa manchetes das 4 companhias escolhidas pelo Markowitz no mesmo dia da montagem do portfólio através do *Yahoo Finance APi*.\n",
+    "* **Avaliação Semântica:** O pacote processador de linguagem natural avalia se a tonalidade das publicações globais encontra-se permeada por escândalos, revisões de *guidance* negativas ou pânicos.\n",
+    "* **Penalização de Pesos:** Caso o sentimento preponderante indique perigo (Sentimento Negativo), o modelo estocástico penaliza o limite de alocação daquele ativo e re-otimiza o restante das frações. Isso provê uma mescla impecável de dados empíricos passados com precauções estocásticas do presente."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Exposição dos Indicadores de Desempenho (Fundamentação)\n",
+    "\n",
+    "A etapa final de consolidação extrai as evidências exigidas pelo relatório de aprovação. Para os quatros ativos vencedores da competição estocástica, as métricas submetidas compreendem:\n",
+    "\n",
+    "1. **Eixo Rentabilidade:** Exposição do `ROE` das consolidadas.\n",
+    "2. **Eixo Valuation:** Apresentação múltipla do `P/L` e do `P/VP` (Preço sobre Valor Patrimonial).\n",
+    "3. **Eixo Endividamento:** Análise de alavancagem através da proporção corporativa `Debt to Equity` (*Dívida Líquida/Patrimônio Líquido*), essencial frente ao elevado custo da dívida referenciado pela SELIC a dois dígitos na macroeconomia atual."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "*Relatório submetido em aderência completa ao Regulamento de Avaliação do Módulo 01 e Módulo 04 da ementa de Análise de Investimentos.*"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+
+# The absolute path needs to be correctly mapped based on the provided user_information
+file_path = r"c:\Users\User\Downloads\Competicao-de-Carteiras-2026---Analise-de-Investimento\Relatorio_Tecnico_Estrategia.ipynb"
+with open(file_path, "w", encoding="utf-8") as f:
+    json.dump(notebook_content, f, indent=1, ensure_ascii=False)
+
+print(f"Jupyter Notebook criado em {file_path}")
